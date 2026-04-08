@@ -1,6 +1,6 @@
 {
   "name": "@flaron-cdn/flare-as",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AssemblyScript SDK for building Flaron flares: small, fast, type-safe WebAssembly modules for the Flaron edge runtime",
   "license": "MIT",
   "type": "module",

@@ -575,6 +575,49 @@ await test("Spark.list returns parsed key list", async () => {
   assert.equal(ok, 1);
 });
 
+await test("Spark.pull treats positive return as migrated count", async () => {
+  const host = new MockHost();
+  await instantiate(host);
+  host.sparkPullReturn = 3;
+  const ok = host.exports.test_spark_pull_success();
+  assert.equal(ok, 1, "positive return should produce ok=true with count");
+  assert.equal(host.calls[0].name, "spark_pull");
+  assert.equal(host.calls[0].args[0], "node-2");
+  assert.equal(host.calls[0].args[1], '["a","b","c"]');
+});
+
+await test("Spark.pull treats zero as ok with count=0", async () => {
+  const host = new MockHost();
+  await instantiate(host);
+  host.sparkPullReturn = 0;
+  const ok = host.exports.test_spark_pull_zero_keys_migrated();
+  assert.equal(ok, 1);
+});
+
+await test("Spark.pull maps -3 to WriteLimit", async () => {
+  const host = new MockHost();
+  await instantiate(host);
+  host.sparkPullReturn = -3;
+  const ok = host.exports.test_spark_pull_write_limit_error();
+  assert.equal(ok, 1, "negative -3 should map to SparkPullError.WriteLimit");
+});
+
+await test("Spark.pull maps -8 to BadKey", async () => {
+  const host = new MockHost();
+  await instantiate(host);
+  host.sparkPullReturn = -8;
+  const ok = host.exports.test_spark_pull_bad_key_error();
+  assert.equal(ok, 1, "negative -8 should map to SparkPullError.BadKey");
+});
+
+await test("Spark.pull maps unrecognised negative to Unknown", async () => {
+  const host = new MockHost();
+  await instantiate(host);
+  host.sparkPullReturn = -42;
+  const ok = host.exports.test_spark_pull_unknown_error();
+  assert.equal(ok, 1, "negative -42 should map to SparkPullError.Unknown");
+});
+
 await test("Plasma.get returns the stored bytes", async () => {
   const host = new MockHost();
   await instantiate(host);

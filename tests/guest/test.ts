@@ -13,6 +13,7 @@ import {
   Response,
   Spark,
   SparkSetError,
+  SparkPullError,
   Plasma,
   Secret,
   Snowflake,
@@ -140,6 +141,45 @@ export function test_spark_list(): i32 {
   if (keys[1] != "b") return 0;
   if (keys[2] != "c") return 0;
   return 1;
+}
+
+export function test_spark_pull_success(): i32 {
+  resetArena();
+  const r = Spark.pull("node-2", ["a", "b", "c"]);
+  if (!r.ok) return 0;
+  if (r.count != 3) return 0;
+  if (r.error != SparkPullError.Ok) return 0;
+  return 1;
+}
+
+export function test_spark_pull_zero_keys_migrated(): i32 {
+  resetArena();
+  const r = Spark.pull("node-2", ["x"]);
+  if (!r.ok) return 0;
+  if (r.count != 0) return 0;
+  return 1;
+}
+
+export function test_spark_pull_write_limit_error(): i32 {
+  resetArena();
+  const r = Spark.pull("node-2", ["a"]);
+  if (r.ok) return 0;
+  if (r.count != 0) return 0;
+  return r.error == SparkPullError.WriteLimit ? 1 : 0;
+}
+
+export function test_spark_pull_bad_key_error(): i32 {
+  resetArena();
+  const r = Spark.pull("node-2", ["a"]);
+  if (r.ok) return 0;
+  return r.error == SparkPullError.BadKey ? 1 : 0;
+}
+
+export function test_spark_pull_unknown_error(): i32 {
+  resetArena();
+  const r = Spark.pull("node-2", ["a"]);
+  if (r.ok) return 0;
+  return r.error == SparkPullError.Unknown ? 1 : 0;
 }
 
 // --- Plasma ---

@@ -8,7 +8,7 @@ export { alloc, resetArena } from "./memory";
 export { FlareAction, encodeAction } from "./action";
 export { Request } from "./request";
 export { Response } from "./response";
-export { Spark, SparkEntry, SparkSetError } from "./spark";
+export { Spark, SparkEntry, SparkSetError, SparkPullError, SparkPullResult } from "./spark";
 export { Plasma, PlasmaSetError } from "./plasma";
 export { Secret } from "./secret";
 export { Snowflake } from "./snowflake";

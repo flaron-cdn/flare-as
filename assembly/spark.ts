@@ -46,6 +46,45 @@ export const enum SparkSetError {
   NoCapability = 9,
 }
 
+/// SparkPullError is the typed error returned by Spark.pull when the host
+/// reports a failure. The host wire format encodes errors as the negation of
+/// the sparkErr* code (e.g. -3 for WriteLimit). Only the codes spark_pull is
+/// permitted to return appear here.
+export const enum SparkPullError {
+  Ok = 0,
+  WriteLimit = 3,
+  NotAvailable = 5,
+  Internal = 6,
+  BadKey = 8,
+  NoCapability = 9,
+  Unknown = -1,
+}
+
+/// SparkPullResult bundles the success count and the error from a Spark.pull
+/// call. When ok is true the host migrated `count` keys; when ok is false the
+/// host returned the typed `error` and count is 0.
+export class SparkPullResult {
+  ok: bool;
+  count: u32;
+  error: SparkPullError;
+
+  constructor(ok: bool, count: u32, error: SparkPullError) {
+    this.ok = ok;
+    this.count = count;
+    this.error = error;
+  }
+
+  /// Build a success result from a non-negative host return value.
+  static success(count: u32): SparkPullResult {
+    return new SparkPullResult(true, count, SparkPullError.Ok);
+  }
+
+  /// Build an error result from the absolute value of a negative host return.
+  static failure(error: SparkPullError): SparkPullResult {
+    return new SparkPullResult(false, 0, error);
+  }
+}
+
 export class Spark {
   /// Get a value. Returns null when the key does not exist or Spark is not
   /// configured. The 4-byte TTL prefix from the host wire format is stripped
@@ -112,10 +151,12 @@ export class Spark {
     return parseStringArray(json!);
   }
 
-  /// Pull keys from another node's Spark store into this node. Returns the
-  /// number of keys migrated, or a negative value on error. Rate-limited to
-  /// one pull per invocation.
-  static pull(originNode: string, keys: string[]): i32 {
+  /// Pull keys from another node's Spark store into this node. The host wire
+  /// format is a single i32: non-negative is the count of keys migrated,
+  /// negative is the negation of a sparkErr* code. The SDK decodes both into
+  /// a SparkPullResult so callers never have to inspect the raw value.
+  /// Rate-limited to one pull per invocation; further calls return WriteLimit.
+  static pull(originNode: string, keys: string[]): SparkPullResult {
     const origBuf = strToUtf8(originNode);
     let json = "[";
     for (let i = 0; i < keys.length; i++) {
@@ -124,11 +165,29 @@ export class Spark {
     }
     json += "]";
     const keysBuf = strToUtf8(json);
-    return env.spark_pull(
+    const code = env.spark_pull(
       bytesPtr(origBuf),
       bytesLen(origBuf),
       bytesPtr(keysBuf),
       bytesLen(keysBuf),
     );
+    if (code >= 0) {
+      return SparkPullResult.success(<u32>code);
+    }
+    return SparkPullResult.failure(Spark.pullErrorFromCode(-code));
+  }
+
+  /// Map a positive sparkErr* code (the absolute value of the negative host
+  /// return) to a typed SparkPullError. Exposed so tests and advanced callers
+  /// can convert raw codes if they bypass Spark.pull.
+  static pullErrorFromCode(code: i32): SparkPullError {
+    switch (code) {
+      case 3: return SparkPullError.WriteLimit;
+      case 5: return SparkPullError.NotAvailable;
+      case 6: return SparkPullError.Internal;
+      case 8: return SparkPullError.BadKey;
+      case 9: return SparkPullError.NoCapability;
+      default: return SparkPullError.Unknown;
+    }
   }
 }
