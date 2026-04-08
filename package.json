@@ -1,0 +1,51 @@
+{
+  "name": "@flaron-cdn/flare-as",
+  "version": "1.0.0",
+  "description": "AssemblyScript SDK for building Flaron flares: small, fast, type-safe WebAssembly modules for the Flaron edge runtime",
+  "license": "MIT",
+  "type": "module",
+  "main": "build/release.js",
+  "types": "assembly/index.ts",
+  "files": [
+    "assembly/",
+    "build/",
+    "asconfig.json",
+    "tsconfig.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "asbuild:debug": "asc assembly/index.ts --target debug",
+    "asbuild:release": "asc assembly/index.ts --target release",
+    "asbuild": "npm run asbuild:debug && npm run asbuild:release",
+    "test": "node tests/runner.mjs",
+    "example:hello": "asc examples/hello/index.ts --target release --outFile examples/hello/build/hello.wasm --runtime stub --exportRuntime",
+    "example:spark-counter": "asc examples/spark-counter/index.ts --target release --outFile examples/spark-counter/build/spark-counter.wasm --runtime stub --exportRuntime",
+    "example:plasma-counter": "asc examples/plasma-counter/index.ts --target release --outFile examples/plasma-counter/build/plasma-counter.wasm --runtime stub --exportRuntime",
+    "example:secret-jwt": "asc examples/secret-jwt/index.ts --target release --outFile examples/secret-jwt/build/secret-jwt.wasm --runtime stub --exportRuntime",
+    "example:websocket-echo": "asc examples/websocket-echo/index.ts --target release --outFile examples/websocket-echo/build/websocket-echo.wasm --runtime stub --exportRuntime",
+    "example:beam-fetch": "asc examples/beam-fetch/index.ts --target release --outFile examples/beam-fetch/build/beam-fetch.wasm --runtime stub --exportRuntime",
+    "example:edge-ops": "asc examples/edge-ops/index.ts --target release --outFile examples/edge-ops/build/edge-ops.wasm --runtime stub --exportRuntime",
+    "examples": "npm run example:hello && npm run example:spark-counter && npm run example:plasma-counter && npm run example:secret-jwt && npm run example:websocket-echo && npm run example:beam-fetch && npm run example:edge-ops"
+  },
+  "keywords": [
+    "flaron",
+    "wasm",
+    "webassembly",
+    "edge",
+    "assemblyscript",
+    "cdn",
+    "sdk"
+  ],
+  "homepage": "https://flaron.dev",
+  "bugs": {
+    "url": "https://github.com/flaron-cdn/flare-as/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flaron-cdn/flare-as.git"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.27.34"
+  }
+}

@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+# Trusted publishing via npm provenance.
+# Requires a "GitHub Actions" trusted publisher to be configured for
+# @flaron-cdn/flare-as on npmjs.com BEFORE the first OIDC publish:
+#   https://docs.npmjs.com/trusted-publishers
+# Until then, the first 0.99.0 publish is performed manually with
+# `npm publish --access public` from a maintainer machine.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run asbuild
+
+      - name: Publish to npm with provenance
+        run: npm publish --access public --provenance
